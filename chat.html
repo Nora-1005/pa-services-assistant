@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Pennsylvania Services Assistant</title>
+  <style>
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background:#f7f7f8;
+      margin:0;
+      padding:0;
+    }
+    .wrap{
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .card{
+      background:#fff;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    h1{
+      margin:0 0 8px 0;
+      font-size: 22px;
+    }
+    .sub{
+      margin:0 0 16px 0;
+      color:#555;
+      font-size: 14px;
+    }
+    textarea{
+      width:100%;
+      height: 110px;
+      padding: 12px;
+      font-size: 14px;
+      border:1px solid #ddd;
+      border-radius: 10px;
+      outline:none;
+      box-sizing:border-box;
+      resize: vertical;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      align-items:center;
+    }
+    button{
+      padding: 10px 14px;
+      border:0;
+      border-radius: 10px;
+      cursor:pointer;
+      font-size: 14px;
+    }
+    #sendBtn{ background:#111; color:#fff; }
+    #clearBtn{ background:#eee; }
+    button:disabled{ opacity:0.6; cursor:not-allowed; }
+    #status{ color:#666; font-size: 13px; }
+    .out{
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background:#f2f2f3;
+      white-space: pre-wrap;
+      min-height: 80px;
+      border: 1px solid #e6e6e7;
+    }
+    .footer{
+      margin-top: 10px;
+      color:#777;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Pennsylvania Services Assistant</h1>
+      <p class="sub">
+        Ask questions about Pennsylvania public services (licenses, benefits, permits, etc.).
+        The assistant will respond in English.
+      </p>
+
+      <textarea id="prompt" placeholder="Type your question in English..."></textarea>
+
+      <div class="row">
+        <button id="sendBtn" onclick="askAI()">Send</button>
+        <button id="clearBtn" onclick="clearAll()">Clear</button>
+        <span id="status"></span>
+      </div>
+
+      <div id="response" class="out" aria-live="polite"></div>
+
+      <div class="footer">
+        Note: This is a demo assistant. For official information, always verify with Pennsylvania state websites.
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_URL = "http://localhost:3000/chat";
+
+  function setStatus(t){ document.getElementById("status").innerText = t || ""; }
+  function setResponse(t){ document.getElementById("response").innerText = t || ""; }
+  function setLoading(isLoading){
+    const btn = document.getElementById("sendBtn");
+    btn.disabled = isLoading;
+    btn.innerText = isLoading ? "Sending..." : "Send";
+  }
+
+  async function askAI(){
+    const prompt = document.getElementById("prompt").value.trim();
+    if(!prompt){
+      setResponse("Please enter a question.");
+      return;
+    }
+
+    setLoading(true);
+    setStatus("Waiting for response...");
+    setResponse("");
+
+    try{
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ message: prompt })
+      });
+
+      if(!resp.ok){
+        const txt = await resp.text();
+        setResponse(`Request failed (${resp.status}). ${txt}`);
+        setStatus("");
+        return;
+      }
+
+      const data = await resp.json();
+      setResponse(data.reply || "(No reply returned.)");
+      setStatus("Done.");
+    }catch(e){
+      setResponse("Network error. Make sure the server is running at http://localhost:3000.");
+      setStatus("");
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  function clearAll(){
+    document.getElementById("prompt").value = "";
+    setResponse("");
+    setStatus("");
+  }
+</script>
+</body>
+</html>
