@@ -6,6 +6,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("."));
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "chat.html"));
+});
 
 // 1) 从环境变量拿 key，避免写进代码/网页
 const apiKey = (process.env.OPENAI_API_KEY || "").trim();
